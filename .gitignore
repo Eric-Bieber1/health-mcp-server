@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+*.db
+data/
+.garminconnect/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/

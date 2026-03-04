@@ -1,0 +1,16 @@
+services:
+  health-mcp:
+    build: .
+    container_name: health-mcp
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../fitness-dashboard/data:/app/data
+    env_file:
+      - ../fitness-dashboard/.env
+    environment:
+      - TZ=America/Chicago
+      - DB_PATH=/app/data/fitness.db
+      - GARMIN_TOKENSTORE=/app/data/.garminconnect
+      - PORT=3000
