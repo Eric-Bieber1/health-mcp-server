@@ -29,5 +29,4 @@ if __name__ == "__main__":
     if "--stdio" in sys.argv:
         mcp.run(transport="stdio")
     else:
-        port = int(os.environ.get("PORT", "3000"))
-        mcp.run(transport="sse", host="0.0.0.0", port=port)
+        mcp.run(transport="sse")
