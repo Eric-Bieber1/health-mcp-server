@@ -23,6 +23,7 @@ from mcp_instance import mcp  # noqa: E402
 import tools.garmin   # noqa: E402, F401  — 12 tools
 import tools.dexcom   # noqa: E402, F401  — 4 tools
 import tools.hevy     # noqa: E402, F401  — 6 tools
+import tools.nutrition  # noqa: E402, F401  — 6 tools
 
 from starlette.requests import Request    # noqa: E402
 from starlette.responses import JSONResponse  # noqa: E402
