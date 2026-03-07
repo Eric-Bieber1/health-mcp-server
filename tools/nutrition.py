@@ -29,6 +29,10 @@ RDA = {
     "fiber_g": {"target": 38, "unit": "g", "label": "Fiber"},
     "omega3_g": {"target": 1.6, "unit": "g", "label": "Omega-3"},
     "cholesterol_mg": {"target": 300, "unit": "mg", "label": "Cholesterol"},
+    "biotin_ug": {"target": 30, "unit": "µg", "label": "Biotin"},
+    "choline_mg": {"target": 550, "unit": "mg", "label": "Choline"},
+    "iodine_ug": {"target": 150, "unit": "µg", "label": "Iodine"},
+    "beta_carotene_ug": {"target": 1500, "unit": "µg", "label": "Beta-carotene"},
 }
 
 
