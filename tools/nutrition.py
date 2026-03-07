@@ -6,7 +6,7 @@ from db import query_all, query_one
 RDA = {
     "vitamin_d_iu": {"target": 600, "unit": "IU", "label": "Vitamin D"},
     "vitamin_c_mg": {"target": 90, "unit": "mg", "label": "Vitamin C"},
-    "vitamin_a_iu": {"target": 3000, "unit": "IU", "label": "Vitamin A"},
+    "vitamin_a_ug": {"target": 900, "unit": "µg", "label": "Vitamin A"},
     "vitamin_e_mg": {"target": 15, "unit": "mg", "label": "Vitamin E"},
     "vitamin_k_ug": {"target": 120, "unit": "µg", "label": "Vitamin K"},
     "calcium_mg": {"target": 1000, "unit": "mg", "label": "Calcium"},
