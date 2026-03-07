@@ -460,11 +460,13 @@ def get_activities(start: int = 0, limit: int = 10) -> str:
 
     Args:
         start: Starting index (0 = most recent). Default 0.
-        limit: Maximum number of activities to return. Default 10.
+        limit: Maximum number of activities to return. Default 10, max 50.
 
     Returns a formatted list of activities with name, type, date,
     duration, distance, and calories.
     """
+    limit = max(1, min(50, limit))
+    start = max(0, start)
     try:
         data = call_garmin("get_activities", start, limit)
     except Exception as e:

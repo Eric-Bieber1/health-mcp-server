@@ -24,6 +24,14 @@ import tools.garmin   # noqa: E402, F401  — 12 tools
 import tools.dexcom   # noqa: E402, F401  — 4 tools
 import tools.hevy     # noqa: E402, F401  — 6 tools
 
+from starlette.requests import Request    # noqa: E402
+from starlette.responses import JSONResponse  # noqa: E402
+
+
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> JSONResponse:
+    return JSONResponse({"status": "ok", "service": "health-mcp-server"})
+
 
 if __name__ == "__main__":
     if "--stdio" in sys.argv:
