@@ -3,7 +3,7 @@
 Reads from the fitness dashboard's SQLite DB first to avoid redundant
 API calls, with live API fallback when data isn't in the DB.
 
-Supports SSE (default, port 3000) and stdio (--stdio flag) transports.
+Supports streamable-http (default, port 3000) and stdio (--stdio flag) transports.
 """
 
 import sys
@@ -38,4 +38,4 @@ if __name__ == "__main__":
     if "--stdio" in sys.argv:
         mcp.run(transport="stdio")
     else:
-        mcp.run(transport="sse")
+        mcp.run(transport="streamable-http")
