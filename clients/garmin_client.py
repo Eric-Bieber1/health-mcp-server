@@ -13,7 +13,7 @@ def get_garmin_client() -> Garmin:
         email = os.environ.get("GARMIN_EMAIL")
         password = os.environ.get("GARMIN_PASSWORD")
         if not email or not password:
-            raise ValueError("GARMIN_EMAIL and GARMIN_PASSWORD must be set")
+            raise ValueError("Garmin credentials not configured.")
 
         tokenstore = os.environ.get("GARMIN_TOKENSTORE")
         _garmin_client = Garmin(email, password)

@@ -14,7 +14,7 @@ def get_dexcom_client() -> Dexcom:
         password = os.environ.get("DEXCOM_PASSWORD")
         region = os.environ.get("DEXCOM_REGION", "us").lower()
         if not username or not password:
-            raise ValueError("DEXCOM_USERNAME and DEXCOM_PASSWORD must be set")
+            raise ValueError("Dexcom credentials not configured.")
         _dexcom_client = Dexcom(username, password, ous=(region == "ous"))
     return _dexcom_client
 

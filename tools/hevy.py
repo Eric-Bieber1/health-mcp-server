@@ -1,19 +1,27 @@
 """Hevy workout tools — 6 DB-only tools for strength training data."""
 
 import json
+import logging
 from mcp_instance import mcp
 from db import query_all, query_one
+from auth import require_auth
+
+logger = logging.getLogger(__name__)
 
 
 @mcp.tool()
-def get_recent_workouts(limit: int = 10) -> str:
+def get_recent_workouts(api_key: str, limit: int = 10) -> str:
     """Get recent workouts from Hevy.
 
     Args:
+        api_key: API key for authentication.
         limit: Maximum number of workouts to return (1-50, default 10).
 
     Returns a formatted list of workouts with title, date, duration, and volume.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     limit = max(1, min(50, limit))
     rows = query_all(
         "SELECT id, title, start_time, duration_min, total_volume_lbs, total_sets "
@@ -44,14 +52,18 @@ def get_recent_workouts(limit: int = 10) -> str:
 
 
 @mcp.tool()
-def get_workout(workout_id: str) -> str:
+def get_workout(api_key: str, workout_id: str) -> str:
     """Get detailed information about a single workout.
 
     Args:
+        api_key: API key for authentication.
         workout_id: The Hevy workout ID.
 
     Returns workout details including each exercise with sets, weight, and reps.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     row = query_one("SELECT * FROM hevy_workouts WHERE id = ?", (workout_id,))
 
     if not row:
@@ -92,16 +104,20 @@ def get_workout(workout_id: str) -> str:
 
 
 @mcp.tool()
-def get_exercise_progress(exercise_name: str, limit: int = 20) -> str:
+def get_exercise_progress(api_key: str, exercise_name: str, limit: int = 20) -> str:
     """Get progression over time for a specific exercise.
 
     Args:
+        api_key: API key for authentication.
         exercise_name: Name of the exercise (e.g. 'Bench Press (Barbell)').
                        Use a partial match — case-insensitive search.
         limit: Maximum entries to return (default 20).
 
     Returns chronological list of best weight, reps, volume, and e1RM per session.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     limit = max(1, min(100, limit))
     rows = query_all(
         "SELECT workout_date, exercise_name, best_weight_lbs, best_reps, volume_lbs, e1rm_lbs, primary_muscle "
@@ -134,12 +150,18 @@ def get_exercise_progress(exercise_name: str, limit: int = 20) -> str:
 
 
 @mcp.tool()
-def get_personal_records() -> str:
+def get_personal_records(api_key: str) -> str:
     """Get all-time personal records for every tracked exercise.
+
+    Args:
+        api_key: API key for authentication.
 
     Returns PRs sorted by estimated 1-rep max (e1RM), showing best weight,
     best volume, and best e1RM with dates for each exercise.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     rows = query_all(
         "SELECT * FROM hevy_personal_records ORDER BY best_e1rm_lbs DESC",
     )
@@ -166,14 +188,18 @@ def get_personal_records() -> str:
 
 
 @mcp.tool()
-def get_muscle_volume(days: int = 30) -> str:
+def get_muscle_volume(api_key: str, days: int = 30) -> str:
     """Get training volume by muscle group over a time period.
 
     Args:
+        api_key: API key for authentication.
         days: Number of days to look back (default 30).
 
     Returns total volume in pounds grouped by primary muscle group.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     days = max(1, min(365, days))
     rows = query_all(
         "SELECT primary_muscle, SUM(volume_lbs) as total_volume, COUNT(*) as sets_count "
@@ -209,15 +235,19 @@ def get_muscle_volume(days: int = 30) -> str:
 
 
 @mcp.tool()
-def get_weekly_summary(weeks: int = 4) -> str:
+def get_weekly_summary(api_key: str, weeks: int = 4) -> str:
     """Get weekly workout count and volume summary.
 
     Args:
+        api_key: API key for authentication.
         weeks: Number of weeks to show (default 4).
 
     Returns a week-by-week breakdown of workout count, total volume,
     and average duration.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     weeks = max(1, min(52, weeks))
     rows = query_all(
         "SELECT "

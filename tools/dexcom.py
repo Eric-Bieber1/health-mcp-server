@@ -1,5 +1,6 @@
 """Dexcom G7 tools — 4 tools with DB-first strategy for readings/stats."""
 
+import logging
 import os
 import statistics
 from datetime import datetime, timedelta, timezone
@@ -7,6 +8,9 @@ from datetime import datetime, timedelta, timezone
 from mcp_instance import mcp
 from db import query_all, query_one
 from clients.dexcom_client import get_dexcom_client, with_retry
+from auth import require_auth
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -14,13 +18,19 @@ from clients.dexcom_client import get_dexcom_client, with_retry
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def get_current_glucose() -> str:
+def get_current_glucose(api_key: str) -> str:
     """Get the current glucose reading from Dexcom G7.
+
+    Args:
+        api_key: API key for authentication.
 
     Returns glucose value in mg/dL, trend arrow, and trend description.
     The reading must be within the last 10 minutes to be considered current.
     Always uses live API for real-time data.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     try:
         def _fetch():
             dexcom = get_dexcom_client()
@@ -45,16 +55,23 @@ def get_current_glucose() -> str:
             f"Time: {reading.datetime.strftime('%Y-%m-%d %H:%M:%S')}"
         )
     except Exception as e:
-        return f"Error fetching current glucose: {e}"
+        logger.error(f"Error fetching current glucose: {e}")
+        return "Failed to fetch current glucose data. Please try again later."
 
 
 @mcp.tool()
-def get_latest_glucose() -> str:
+def get_latest_glucose(api_key: str) -> str:
     """Get the latest available glucose reading, looking back up to 24 hours.
+
+    Args:
+        api_key: API key for authentication.
 
     Unlike get_current_glucose, this searches further back if no recent reading exists.
     Always uses live API for freshest reading.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     try:
         def _fetch():
             dexcom = get_dexcom_client()
@@ -87,7 +104,8 @@ def get_latest_glucose() -> str:
             f"Time: {reading.datetime.strftime('%Y-%m-%d %H:%M:%S')} ({age_str})"
         )
     except Exception as e:
-        return f"Error fetching latest glucose: {e}"
+        logger.error(f"Error fetching latest glucose: {e}")
+        return "Failed to fetch latest glucose data. Please try again later."
 
 
 # ---------------------------------------------------------------------------
@@ -95,15 +113,19 @@ def get_latest_glucose() -> str:
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def get_glucose_readings(minutes: int = 60, max_count: int = 12) -> str:
+def get_glucose_readings(api_key: str, minutes: int = 60, max_count: int = 12) -> str:
     """Get glucose readings for a specified time window.
 
     Args:
+        api_key: API key for authentication.
         minutes: Number of minutes to look back (1-1440, default 60).
                  Common values: 60=1hr, 120=2hr, 180=3hr, 360=6hr, 720=12hr, 1440=24hr.
         max_count: Maximum readings to return (1-288, default 12).
                    Dexcom reads every 5 min, so 12 readings = 1 hour.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     minutes = max(1, min(1440, minutes))
     max_count = max(1, min(288, max_count))
 
@@ -160,19 +182,24 @@ def get_glucose_readings(minutes: int = 60, max_count: int = 12) -> str:
         lines.append("(Source: live API)")
         return "\n".join(lines)
     except Exception as e:
-        return f"Error fetching glucose readings: {e}"
+        logger.error(f"Error fetching glucose readings: {e}")
+        return "Failed to fetch glucose readings. Please try again later."
 
 
 @mcp.tool()
-def get_glucose_stats(hours: int = 24) -> str:
+def get_glucose_stats(api_key: str, hours: int = 24) -> str:
     """Get glucose statistics for a time period.
 
     Args:
+        api_key: API key for authentication.
         hours: Number of hours to analyse (1-24, default 24).
 
     Returns summary statistics including average, min, max, time in range,
     and estimated A1C.
     """
+    err = require_auth(api_key)
+    if err:
+        return err
     hours = max(1, min(24, hours))
     glucose_low = int(os.environ.get("GLUCOSE_LOW", "70"))
     glucose_high = int(os.environ.get("GLUCOSE_HIGH", "180"))
@@ -244,4 +271,5 @@ def get_glucose_stats(hours: int = 24) -> str:
             f"(Source: live API)"
         )
     except Exception as e:
-        return f"Error calculating glucose stats: {e}"
+        logger.error(f"Error calculating glucose stats: {e}")
+        return "Failed to fetch glucose stats. Please try again later."
