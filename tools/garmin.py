@@ -683,38 +683,49 @@ def get_training_readiness(date: str) -> str:
     if not data:
         return f"No training readiness data found for {date}."
 
+    # API returns a list of snapshots throughout the day; use the first (most recent)
+    if isinstance(data, list):
+        if len(data) == 0:
+            return f"No training readiness data found for {date}."
+        data = data[0]
+
     score = _safe_get(data, "score")
     level = _safe_get(data, "level")
+    feedback = _safe_get(data, "feedbackShort")
 
     lines = [
         f"Training Readiness for {date}",
         "=" * 35,
         f"Score:   {score}",
         f"Level:   {level}",
+        f"Status:  {feedback}",
         "",
         "Contributing Factors:",
     ]
 
     factors_to_check = [
-        ("sleepScore", "Sleep Score"),
-        ("sleepHistory", "Sleep History"),
-        ("recoveryTime", "Recovery Time"),
-        ("acuteLoad", "Acute Load"),
-        ("trainingLoadBalance", "Training Load Balance"),
-        ("hRV", "HRV Status"),
-        ("stressHistory", "Stress History"),
-        ("sleepQuality", "Sleep Quality"),
+        ("sleepScore", "sleepScoreFactorPercent", "sleepScoreFactorFeedback", "Sleep Score"),
+        ("recoveryTime", "recoveryTimeFactorPercent", "recoveryTimeFactorFeedback", "Recovery Time"),
+        ("acuteLoad", "acwrFactorPercent", "acwrFactorFeedback", "Training Load"),
+        (None, "stressHistoryFactorPercent", "stressHistoryFactorFeedback", "Stress History"),
+        (None, "hrvFactorPercent", "hrvFactorFeedback", "HRV Status"),
+        (None, "sleepHistoryFactorPercent", "sleepHistoryFactorFeedback", "Sleep History"),
     ]
 
-    for key, label in factors_to_check:
-        val = _safe_get(data, key)
-        if val not in (None, "N/A"):
-            if isinstance(val, dict):
-                factor_score = _safe_get(val, "score", default=_safe_get(val, "value", default=""))
-                factor_level = _safe_get(val, "level", default=_safe_get(val, "status", default=""))
-                lines.append(f"  {label}: {factor_score} ({factor_level})")
-            else:
-                lines.append(f"  {label}: {val}")
+    for value_key, pct_key, feedback_key, label in factors_to_check:
+        pct = _safe_get(data, pct_key)
+        fb = _safe_get(data, feedback_key)
+        if pct not in (None, "N/A"):
+            val_str = ""
+            if value_key:
+                val = _safe_get(data, value_key)
+                if val not in (None, "N/A"):
+                    val_str = f" (value: {val})"
+            lines.append(f"  {label}: {pct}% — {fb}{val_str}")
+
+    hrv_avg = _safe_get(data, "hrvWeeklyAverage")
+    if hrv_avg not in (None, "N/A"):
+        lines.append(f"  HRV Weekly Avg: {hrv_avg}")
 
     return "\n".join(lines)
 
