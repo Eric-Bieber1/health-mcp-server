@@ -5,8 +5,6 @@ from datetime import datetime
 from mcp_instance import mcp
 from db import query_one, query_all
 from clients.garmin_client import call_garmin
-from auth import require_auth
-
 logger = logging.getLogger(__name__)
 
 
@@ -50,19 +48,15 @@ def _safe_get(data, *keys, default="N/A"):
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def get_stats(api_key: str, date: str) -> str:
+def get_stats(date: str) -> str:
     """Get daily health summary for a given date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format (e.g. '2026-02-25')
 
     Returns a formatted summary including steps, heart rate, body battery,
     stress, calories, floors climbed, and distance.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first
     row = query_one("SELECT * FROM garmin_daily WHERE date = ?", (date,))
     if row:
@@ -126,19 +120,15 @@ def get_stats(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_sleep_summary(api_key: str, date: str) -> str:
+def get_sleep_summary(date: str) -> str:
     """Get sleep data summary for a given date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format. This is the date you woke up on.
 
     Returns formatted sleep summary including score, duration, and stage
     breakdown (deep, light, REM, awake).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first for sleep score and HRV
     row = query_one("SELECT * FROM garmin_daily WHERE date = ?", (date,))
     if row and row.get("sleep_score") is not None:
@@ -209,19 +199,15 @@ def get_sleep_summary(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_heart_rates_summary(api_key: str, date: str) -> str:
+def get_heart_rates_summary(date: str) -> str:
     """Get heart rate zone summary for a given date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns a compact summary of resting HR, max HR, and time spent in
     each heart rate zone. Always uses live API (zones not stored in DB).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     try:
         data = call_garmin("get_heart_rates", date)
     except Exception as e:
@@ -260,19 +246,15 @@ def get_heart_rates_summary(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_body_composition(api_key: str, start_date: str, end_date: str) -> str:
+def get_body_composition(start_date: str, end_date: str) -> str:
     """Get body composition data for a date range.
 
     Args:
-        api_key: API key for authentication.
         start_date: Start date in YYYY-MM-DD format.
         end_date: End date in YYYY-MM-DD format.
 
     Returns weight entries with dates, converted to pounds.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first
     rows = query_all(
         "SELECT date, weight_lbs FROM garmin_daily WHERE date BETWEEN ? AND ? AND weight_lbs IS NOT NULL ORDER BY date",
@@ -343,19 +325,15 @@ def get_body_composition(api_key: str, start_date: str, end_date: str) -> str:
 
 
 @mcp.tool()
-def get_blood_pressure(api_key: str, start_date: str, end_date: str) -> str:
+def get_blood_pressure(start_date: str, end_date: str) -> str:
     """Get blood pressure readings for a date range.
 
     Args:
-        api_key: API key for authentication.
         start_date: Start date in YYYY-MM-DD format.
         end_date: End date in YYYY-MM-DD format.
 
     Returns systolic, diastolic, and pulse readings.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first
     rows = query_all(
         "SELECT date, bp_systolic, bp_diastolic FROM garmin_daily WHERE date BETWEEN ? AND ? AND bp_systolic IS NOT NULL ORDER BY date",
@@ -417,19 +395,15 @@ def get_blood_pressure(api_key: str, start_date: str, end_date: str) -> str:
 
 
 @mcp.tool()
-def get_stress_summary(api_key: str, date: str) -> str:
+def get_stress_summary(date: str) -> str:
     """Get stress level breakdown for a given date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns average stress, max stress, and time spent at each stress
     level (rest, low, medium, high).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first for avg stress
     row = query_one("SELECT * FROM garmin_daily WHERE date = ?", (date,))
     if row and row.get("avg_stress") is not None:
@@ -489,20 +463,16 @@ def get_stress_summary(api_key: str, date: str) -> str:
 # ---------------------------------------------------------------------------
 
 @mcp.tool()
-def get_activities(api_key: str, start: int = 0, limit: int = 10) -> str:
+def get_activities(start: int = 0, limit: int = 10) -> str:
     """Get a list of recent activities.
 
     Args:
-        api_key: API key for authentication.
         start: Starting index (0 = most recent). Default 0.
         limit: Maximum number of activities to return. Default 10, max 50.
 
     Returns a formatted list of activities with name, type, date,
     duration, distance, and calories.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     limit = max(1, min(50, limit))
     start = max(0, start)
     try:
@@ -546,19 +516,15 @@ def get_activities(api_key: str, start: int = 0, limit: int = 10) -> str:
 
 
 @mcp.tool()
-def get_activity(api_key: str, activity_id: int) -> str:
+def get_activity(activity_id: int) -> str:
     """Get detailed information about a single activity.
 
     Args:
-        api_key: API key for authentication.
         activity_id: The numeric Garmin activity ID.
 
     Returns formatted activity details including HR, pace, elevation,
     and performance metrics.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     try:
         data = call_garmin("get_activity", activity_id)
     except Exception as e:
@@ -627,19 +593,15 @@ def get_activity(api_key: str, activity_id: int) -> str:
 
 
 @mcp.tool()
-def get_steps_data(api_key: str, date: str) -> str:
+def get_steps_data(date: str) -> str:
     """Get step data summarized by time period for a given date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns step totals grouped by morning, afternoon, and evening.
     Always uses live API (time-of-day breakdown not in DB).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     try:
         data = call_garmin("get_steps_data", date)
     except Exception as e:
@@ -703,19 +665,15 @@ def get_steps_data(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_training_readiness(api_key: str, date: str) -> str:
+def get_training_readiness(date: str) -> str:
     """Get training readiness score and contributing factors.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns readiness score, level, and contributing factors.
     Always uses live API (not stored in DB).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     try:
         data = call_garmin("get_training_readiness", date)
     except Exception as e:
@@ -762,19 +720,15 @@ def get_training_readiness(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_training_status(api_key: str, date: str) -> str:
+def get_training_status(date: str) -> str:
     """Get training status including load, VO2 max, and recovery.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns training status, load numbers, VO2 max, and recovery time.
     Always uses live API (not stored in DB).
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     try:
         data = call_garmin("get_training_status", date)
     except Exception as e:
@@ -820,19 +774,15 @@ def get_training_status(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_weigh_ins(api_key: str, start_date: str, end_date: str) -> str:
+def get_weigh_ins(start_date: str, end_date: str) -> str:
     """Get weight measurements for a date range.
 
     Args:
-        api_key: API key for authentication.
         start_date: Start date in YYYY-MM-DD format.
         end_date: End date in YYYY-MM-DD format.
 
     Returns a formatted list of weight measurements in pounds and kg.
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     # Try DB first
     rows = query_all(
         "SELECT date, weight_lbs FROM garmin_daily WHERE date BETWEEN ? AND ? AND weight_lbs IS NOT NULL ORDER BY date",

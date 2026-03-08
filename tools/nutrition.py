@@ -3,8 +3,6 @@
 import logging
 from mcp_instance import mcp
 from db import query_all, query_one
-from auth import require_auth
-
 logger = logging.getLogger(__name__)
 
 RDA = {
@@ -41,11 +39,10 @@ RDA = {
 
 
 @mcp.tool()
-def get_nutrition_daily(api_key: str, date: str) -> str:
+def get_nutrition_daily(date: str) -> str:
     """Get daily macros, fat breakdown, and targets for a specific date.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns calories, protein, carbs, fat, fiber, sugar, sodium, water,
@@ -53,9 +50,6 @@ def get_nutrition_daily(api_key: str, date: str) -> str:
     and personal targets.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     row = query_one("SELECT * FROM cronometer_daily WHERE date = ?", (date,))
 
     if not row:
@@ -113,20 +107,16 @@ def get_nutrition_daily(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_nutrition_micros(api_key: str, date: str) -> str:
+def get_nutrition_micros(date: str) -> str:
     """Get micronutrient intake for a specific date compared to RDA targets.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns all 25 RDA-tracked nutrients with actual value, target, unit,
     and percentage of RDA — sorted by worst gaps first.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     row = query_one("SELECT * FROM cronometer_daily WHERE date = ?", (date,))
 
     if not row:
@@ -160,20 +150,16 @@ def get_nutrition_micros(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_nutrition_averages(api_key: str, days: int = 7) -> str:
+def get_nutrition_averages(days: int = 7) -> str:
     """Get average macro intake over the last N days.
 
     Args:
-        api_key: API key for authentication.
         days: Number of days to average over (1-90, default 7).
 
     Returns average calories, protein, carbs, fat, fiber vs targets,
     and the count of days with tracked data.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     days = max(1, min(90, days))
     rows = query_all(
         "SELECT calories, protein_g, carbs_g, fat_g, fiber_g, "
@@ -237,20 +223,16 @@ def get_nutrition_averages(api_key: str, days: int = 7) -> str:
 
 
 @mcp.tool()
-def get_micro_averages(api_key: str, days: int = 7) -> str:
+def get_micro_averages(days: int = 7) -> str:
     """Get average micronutrient intake over the last N days compared to RDA.
 
     Args:
-        api_key: API key for authentication.
         days: Number of days to average over (1-90, default 7).
 
     Returns average for each of 25 RDA-tracked nutrients with percentage
     of RDA, sorted by worst gaps first.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     days = max(1, min(90, days))
     cols = ", ".join(RDA.keys())
     rows = query_all(
@@ -290,20 +272,16 @@ def get_micro_averages(api_key: str, days: int = 7) -> str:
 
 
 @mcp.tool()
-def get_meals(api_key: str, date: str) -> str:
+def get_meals(date: str) -> str:
     """Get all foods eaten on a specific date, grouped by meal.
 
     Args:
-        api_key: API key for authentication.
         date: Date in YYYY-MM-DD format.
 
     Returns foods grouped by meal (Breakfast, Lunch, Dinner, Snack)
     with calories, protein, carbs, and fat per food.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     rows = query_all(
         "SELECT food_name, meal_group, calories, protein_g, carbs_g, fat_g, amount, unit "
         "FROM cronometer_servings WHERE date = ? ORDER BY meal_group, food_name",
@@ -356,20 +334,16 @@ def get_meals(api_key: str, date: str) -> str:
 
 
 @mcp.tool()
-def get_top_foods(api_key: str, days: int = 30) -> str:
+def get_top_foods(days: int = 30) -> str:
     """Get most frequently eaten foods over the last N days.
 
     Args:
-        api_key: API key for authentication.
         days: Number of days to look back (1-90, default 30).
 
     Returns top 20 foods sorted by frequency, with average calories
     and macros per serving.
     (Source: database)
     """
-    err = require_auth(api_key)
-    if err:
-        return err
     days = max(1, min(90, days))
     rows = query_all(
         "SELECT food_name, COUNT(*) as freq, "
